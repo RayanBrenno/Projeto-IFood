@@ -1,0 +1,24 @@
+# Ambiente
+.env
+.env.local
+*.env
+!.env.example
+
+# Backend (Python)
+backend/.venv/
+backend/__pycache__/
+**/__pycache__/
+*.pyc
+
+# Frontend (Node)
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+
+# Logs
+*.log
