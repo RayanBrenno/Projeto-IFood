@@ -1,0 +1,157 @@
+import type { Category, Ingredient, MenuItem, Order } from '../types/company'
+
+export const mockIngredients: Ingredient[] = [
+  { id: 'i1', name: 'Alface' },
+  { id: 'i2', name: 'Tomate' },
+  { id: 'i3', name: 'Cebola' },
+  { id: 'i4', name: 'Picles' },
+  { id: 'i5', name: 'Maionese' },
+  { id: 'i6', name: 'Bacon' },
+]
+
+export const mockCategories: Category[] = [
+  { id: 'c1', name: 'Hambúrguer' },
+  { id: 'c2', name: 'Porções' },
+  { id: 'c3', name: 'Combos' },
+  { id: 'c4', name: 'Pizza' },
+  { id: 'c5', name: 'Pizza Doce' },
+  { id: 'c6', name: 'Bebidas' },
+  { id: 'c7', name: 'Drinks' },
+  { id: 'c8', name: 'Sobremesas' },
+]
+
+export const mockOrders: Order[] = [
+  {
+    id: 'o1',
+    customerName: 'Rayan B.',
+    status: 'CRIADO',
+    total: 47.8,
+    timeLabel: 'há 2 min',
+    placedMinutesAgo: 2,
+    notes: 'Sem cebola, por favor.',
+    items: [
+      { name: 'X-Burger Fooomé', quantity: 2 },
+      { name: 'Refrigerante Lata', quantity: 1 },
+    ],
+  },
+  {
+    id: 'o2',
+    customerName: 'Marina S.',
+    status: 'CONFIRMADO',
+    total: 32.5,
+    timeLabel: 'há 8 min',
+    placedMinutesAgo: 8,
+    items: [{ name: 'Combo Frango Crispy', quantity: 1 }],
+  },
+  {
+    id: 'o3',
+    customerName: 'João P.',
+    status: 'EM_PREPARO',
+    total: 65.0,
+    timeLabel: 'há 15 min',
+    placedMinutesAgo: 15,
+    notes: 'Capricha no molho extra, por favor!',
+    items: [
+      { name: 'Pizza Calabresa', quantity: 1 },
+      { name: 'Suco Natural', quantity: 2 },
+      { name: 'Pão de Alho', quantity: 1 },
+      { name: 'Refrigerante 2L', quantity: 1 },
+    ],
+  },
+  {
+    id: 'o4',
+    customerName: 'Carla M.',
+    status: 'SAIU_PARA_ENTREGA',
+    total: 28.9,
+    timeLabel: 'há 25 min',
+    placedMinutesAgo: 25,
+    items: [{ name: 'Açaí 500ml', quantity: 1 }],
+  },
+  {
+    id: 'o5',
+    customerName: 'Lucas T.',
+    status: 'ENTREGUE',
+    total: 54.3,
+    timeLabel: 'há 1h',
+    placedMinutesAgo: 60,
+    items: [
+      { name: 'X-Bacon Duplo', quantity: 1 },
+      { name: 'Batata Frita Grande', quantity: 1 },
+    ],
+  },
+  {
+    id: 'o6',
+    customerName: 'Beatriz A.',
+    status: 'ENTREGUE',
+    total: 19.9,
+    timeLabel: 'há 2h',
+    placedMinutesAgo: 120,
+    items: [{ name: 'Milkshake Chocolate', quantity: 1 }],
+  },
+]
+
+export const mockMenuItems: MenuItem[] = [
+  {
+    id: 'p1',
+    name: 'X-Burger Fooomé',
+    description: 'Pão brioche, hambúrguer 160g, queijo e molho da casa',
+    category: 'Hambúrguer',
+    available: true,
+    kind: 'UNITARIO_COM_INGREDIENTES',
+    price: 24.9,
+    removableIngredientIds: ['i1', 'i2', 'i5'],
+  },
+  {
+    id: 'p2',
+    name: 'Combo Frango Crispy',
+    description: 'Frango empanado, fritas e refrigerante',
+    category: 'Combos',
+    available: true,
+    kind: 'SIMPLES',
+    price: 32.5,
+  },
+  {
+    id: 'p3',
+    name: 'Pizza Calabresa',
+    description: 'Massa fina, calabresa, cebola e mussarela',
+    category: 'Pizza',
+    available: true,
+    kind: 'SIMPLES',
+    price: 49.9,
+  },
+  {
+    id: 'p4',
+    name: 'Açaí 500ml',
+    description: 'Açaí com banana, granola e leite condensado',
+    category: 'Sobremesas',
+    available: false,
+    kind: 'SIMPLES',
+    price: 18.9,
+  },
+  {
+    id: 'p5',
+    name: 'Batata Frita',
+    description: 'Porção crocante, peça o tamanho ideal pra você',
+    category: 'Porções',
+    available: true,
+    kind: 'COM_TAMANHOS',
+    sizes: [
+      { id: 's1', label: 'Pequena', price: 14.0 },
+      { id: 's2', label: 'Média', price: 20.0 },
+      { id: 's3', label: 'Grande', price: 28.0 },
+    ],
+  },
+  {
+    id: 'p6',
+    name: 'Batata Recheada',
+    description: 'Com cheddar, bacon e cebolinha',
+    category: 'Porções',
+    available: true,
+    kind: 'COM_TAMANHOS',
+    sizes: [
+      { id: 's4', label: 'Pequena', price: 22.0 },
+      { id: 's5', label: 'Média', price: 30.0 },
+      { id: 's6', label: 'Grande', price: 38.0 },
+    ],
+  },
+]
