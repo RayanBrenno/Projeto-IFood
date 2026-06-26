@@ -108,7 +108,7 @@ export default function RegisterCompanyPage() {
         email,
         password,
       })
-      navigate('/')
+      navigate('/company')
     } catch (err) {
       setError(getApiErrorMessage(err, 'Não foi possível criar sua conta de parceiro. Tente novamente.'))
     }

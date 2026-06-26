@@ -1,15 +1,15 @@
-export type UserRole = 'CLIENTE' | 'RESTAURANTE' | 'ADMIN'
+export type AccountType = 'CLIENTE' | 'RESTAURANTE'
 
 export interface User {
   id: string
   username: string
   email: string
-  role: UserRole
 }
 
 export interface AuthResponse {
   access_token: string
   token_type: string
+  account_type: AccountType
   user: User
 }
 
@@ -17,11 +17,10 @@ export interface RegisterPayload {
   username: string
   email: string
   password: string
-  role?: UserRole
 }
 
 export interface LoginPayload {
-  identifier: string
+  email: string
   password: string
 }
 

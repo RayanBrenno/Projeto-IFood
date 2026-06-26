@@ -1,13 +1,13 @@
 import { createContext, useState, type ReactNode } from 'react'
 import { loginRequest, registerCompanyRequest, registerRequest } from '../api/auth'
-import type { CompanyRegisterPayload, LoginPayload, RegisterPayload, User } from '../types/user'
+import type { AuthResponse, CompanyRegisterPayload, LoginPayload, RegisterPayload, User } from '../types/user'
 
 interface AuthContextValue {
   user: User | null
   loading: boolean
-  login: (payload: LoginPayload) => Promise<void>
-  register: (payload: RegisterPayload) => Promise<void>
-  registerCompany: (payload: CompanyRegisterPayload) => Promise<void>
+  login: (payload: LoginPayload) => Promise<AuthResponse>
+  register: (payload: RegisterPayload) => Promise<AuthResponse>
+  registerCompany: (payload: CompanyRegisterPayload) => Promise<AuthResponse>
   logout: () => void
 }
 
@@ -33,6 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const data = await loginRequest(payload)
       persistSession(data.access_token, data.user)
+      return data
     } finally {
       setLoading(false)
     }
@@ -43,6 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const data = await registerRequest(payload)
       persistSession(data.access_token, data.user)
+      return data
     } finally {
       setLoading(false)
     }
@@ -53,6 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const data = await registerCompanyRequest(payload)
       persistSession(data.access_token, data.user)
+      return data
     } finally {
       setLoading(false)
     }

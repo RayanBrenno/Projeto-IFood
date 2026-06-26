@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { PrivateRoute } from './components/layout/PrivateRoute'
 import HomePage from './pages/HomePage'
+import CompanyPage from './pages/CompanyPage'
 import LoginPage from './pages/LoginPage'
 import RegisterUserPage from './pages/RegisterUserPage'
 import RegisterCompanyPage from './pages/RegisterCompanyPage'
@@ -19,6 +20,14 @@ function App() {
             element={
               <PrivateRoute>
                 <HomePage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/company"
+            element={
+              <PrivateRoute>
+                <CompanyPage />
               </PrivateRoute>
             }
           />

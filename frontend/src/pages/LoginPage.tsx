@@ -11,7 +11,7 @@ export default function LoginPage() {
   const { login, loading } = useAuth()
   const navigate = useNavigate()
 
-  const [identifier, setIdentifier] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
 
@@ -20,8 +20,8 @@ export default function LoginPage() {
     setError('')
 
     try {
-      await login({ identifier, password })
-      navigate('/')
+      const data = await login({ email, password })
+      navigate(data.account_type === 'RESTAURANTE' ? '/company' : '/')
     } catch (err) {
       setError(getApiErrorMessage(err, 'Não foi possível entrar. Tente novamente.'))
     }
@@ -47,11 +47,12 @@ export default function LoginPage() {
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <Input
-          label="E-mail ou nome de usuário"
-          name="identifier"
-          autoComplete="username"
-          value={identifier}
-          onChange={(e) => setIdentifier(e.target.value)}
+          label="E-mail"
+          type="email"
+          name="email"
+          autoComplete="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           required
         />
 
