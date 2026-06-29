@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { PrivateRoute } from './components/layout/PrivateRoute'
 import HomePage from './pages/HomePage'
+import RestaurantPage from './pages/RestaurantPage'
 import CompanyPage from './pages/CompanyPage'
 import LoginPage from './pages/LoginPage'
 import RegisterUserPage from './pages/RegisterUserPage'
@@ -20,6 +21,14 @@ function App() {
             element={
               <PrivateRoute>
                 <HomePage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/restaurants/:id"
+            element={
+              <PrivateRoute>
+                <RestaurantPage />
               </PrivateRoute>
             }
           />
