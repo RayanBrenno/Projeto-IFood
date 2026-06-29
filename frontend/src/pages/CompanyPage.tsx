@@ -2,12 +2,20 @@ import { useState } from 'react'
 import { BottomSheet } from '../components/layout/BottomSheet'
 import { PageContainer } from '../components/layout/PageContainer'
 import { TopBar } from '../components/layout/TopBar'
+import { Button } from '../components/ui/Button'
 import { MenuItemForm } from '../components/domain/MenuItemForm'
 import { MenuItemRow } from '../components/domain/MenuItemRow'
 import { OrderCard } from '../components/domain/OrderCard'
-import { mockCategories, mockIngredients, mockMenuItems, mockOrders } from '../mocks/companyMockData'
-import type { Category, Ingredient, MenuItem, OrderStatus } from '../types/company'
+import { mockOrders } from '../mocks/companyMockData'
+import type { MenuItem, MenuItemPayload, OrderStatus } from '../types/company'
 import { useAuth } from '../hooks/useAuth'
+import { useMenu } from '../hooks/useMenu'
+import { getApiErrorMessage } from '../utils/apiError'
+
+const stripeBg = {
+  backgroundImage:
+    'repeating-linear-gradient(135deg, rgba(255,255,255,.08) 0 16px, rgba(255,255,255,0) 16px 34px)',
+}
 
 const STATUS_FLOW: OrderStatus[] = ['CRIADO', 'CONFIRMADO', 'EM_PREPARO', 'SAIU_PARA_ENTREGA', 'ENTREGUE']
 
@@ -32,10 +40,28 @@ export default function CompanyPage() {
   const [orders, setOrders] = useState(mockOrders)
   const [statusFilter, setStatusFilter] = useState<'ALL' | OrderStatus>('ALL')
 
-  const [menuItems, setMenuItems] = useState(mockMenuItems)
+  const {
+    categories,
+    ingredients,
+    menuItems,
+    loading: menuLoading,
+    error: menuError,
+    addCategory,
+    addIngredient,
+    saveItem,
+    toggleAvailable,
+    reload: reloadMenu,
+  } = useMenu()
   const [editingItem, setEditingItem] = useState<MenuItem | 'new' | null>(null)
-  const [ingredientLibrary, setIngredientLibrary] = useState(mockIngredients)
-  const [categoryLibrary, setCategoryLibrary] = useState(mockCategories)
+  const [formSessionId, setFormSessionId] = useState(0)
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const [toggleError, setToggleError] = useState<string | null>(null)
+
+  function openItemForm(item: MenuItem | 'new') {
+    setSaveError(null)
+    setFormSessionId((id) => id + 1)
+    setEditingItem(item)
+  }
 
   const filteredOrders = orders
     .filter((order) => statusFilter === 'ALL' || order.status === statusFilter)
@@ -49,57 +75,47 @@ export default function CompanyPage() {
     )
   }
 
-  function handleToggleAvailable(itemId: string) {
-    setMenuItems((prev) =>
-      prev.map((item) => (item.id === itemId ? { ...item, available: !item.available } : item))
-    )
-  }
-
-  function handleAddCategory(name: string): Category {
-    const existing = categoryLibrary.find((category) => category.name.toLowerCase() === name.toLowerCase())
-    if (existing) return existing
-
-    const category: Category = { id: crypto.randomUUID(), name }
-    setCategoryLibrary((prev) => [...prev, category])
-    return category
-  }
-
-  function handleAddIngredient(name: string): Ingredient {
-    const existing = ingredientLibrary.find((ingredient) => ingredient.name.toLowerCase() === name.toLowerCase())
-    if (existing) return existing
-
-    const ingredient: Ingredient = { id: crypto.randomUUID(), name }
-    setIngredientLibrary((prev) => [...prev, ingredient])
-    return ingredient
-  }
-
-  function handleSaveItem(data: Omit<MenuItem, 'id' | 'available'>) {
-    if (editingItem && editingItem !== 'new') {
-      setMenuItems((prev) => prev.map((item) => (item.id === editingItem.id ? { ...item, ...data } : item)))
-    } else {
-      setMenuItems((prev) => [...prev, { ...data, id: crypto.randomUUID(), available: true }])
+  async function handleToggleAvailable(itemId: string) {
+    setToggleError(null)
+    try {
+      await toggleAvailable(itemId)
+    } catch (err) {
+      setToggleError(getApiErrorMessage(err, 'Não foi possível atualizar a disponibilidade.'))
     }
-    setEditingItem(null)
+  }
+
+  async function handleSaveItem(data: MenuItemPayload) {
+    setSaveError(null)
+    try {
+      await saveItem(data, editingItem && editingItem !== 'new' ? editingItem.id : undefined)
+      setEditingItem(null)
+    } catch (err) {
+      setSaveError(getApiErrorMessage(err, 'Não foi possível salvar o produto.'))
+    }
   }
 
   return (
-    <PageContainer>
+    <PageContainer className="lg:bg-transparent lg:pt-20">
+      <div
+        className="hidden lg:block fixed inset-0 -z-10 overflow-hidden bg-gradient-to-b from-[#3a57f0] to-[#2233c4] pointer-events-none"
+        aria-hidden
+      >
+        <div className="absolute inset-0" style={stripeBg} />
+      </div>
+
       <TopBar
         title="Painel do parceiro"
+        large
         actions={
-          <button
-            type="button"
-            onClick={logout}
-            aria-label="Sair"
-            className="min-h-[44px] min-w-[44px] flex items-center justify-center text-sm font-semibold text-gray-500"
-          >
+          <Button onClick={logout} className="lg:min-h-[40px] lg:px-4">
             Sair
-          </button>
+          </Button>
         }
       />
 
       <div className="lg:w-4/5 lg:mx-auto">
-        <div className="sticky top-14 z-30 -mx-4 mb-3 bg-gray-50 px-4 pt-1 pb-2">
+      <div className="relative z-10 lg:mx-6 lg:my-6 lg:rounded-3xl lg:border lg:border-white lg:bg-gray-50 lg:px-6 lg:pb-6 lg:pt-4 lg:shadow-xl">
+        <div className="sticky top-14 z-30 -mx-4 mb-3 bg-gray-50 px-4 pt-1 pb-2 lg:mx-0 lg:px-0 lg:pt-0">
           <div className="flex h-11 items-center gap-1 rounded-xl border border-gray-200 bg-white p-1">
             <button
               type="button"
@@ -157,22 +173,41 @@ export default function CompanyPage() {
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            {menuItems.map((item) => (
-              <MenuItemRow
-                key={item.id}
-                item={item}
-                onClick={() => setEditingItem(item)}
-                onToggleAvailable={() => handleToggleAvailable(item.id)}
-              />
-            ))}
+            {menuLoading ? (
+              <p className="text-sm text-gray-400 text-center pt-10">Carregando cardápio…</p>
+            ) : menuError ? (
+              <div className="flex flex-col items-center gap-3 pt-10">
+                <p className="text-sm text-gray-400 text-center">{menuError}</p>
+                <button
+                  type="button"
+                  onClick={reloadMenu}
+                  className="min-h-[44px] rounded-full bg-brand px-4 text-sm font-semibold text-white"
+                >
+                  Tentar novamente
+                </button>
+              </div>
+            ) : (
+              <>
+                {toggleError && <p className="text-sm text-red-500">{toggleError}</p>}
+                {menuItems.map((item) => (
+                  <MenuItemRow
+                    key={item.id}
+                    item={item}
+                    onClick={() => openItemForm(item)}
+                    onToggleAvailable={() => handleToggleAvailable(item.id)}
+                  />
+                ))}
+              </>
+            )}
           </div>
         )}
+      </div>
       </div>
 
       {activeTab === 'menu' && (
         <button
           type="button"
-          onClick={() => setEditingItem('new')}
+          onClick={() => openItemForm('new')}
           aria-label="Adicionar produto"
           className="fixed bottom-6 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-brand text-3xl leading-none text-white shadow-lg"
         >
@@ -185,12 +220,14 @@ export default function CompanyPage() {
         onClose={() => setEditingItem(null)}
         title={editingItem === 'new' ? 'Novo produto' : 'Editar produto'}
       >
+        {saveError && <p className="mb-3 text-sm text-red-500">{saveError}</p>}
         <MenuItemForm
+          key={formSessionId}
           initialItem={editingItem && editingItem !== 'new' ? editingItem : undefined}
-          categoryLibrary={categoryLibrary}
-          onAddCategory={handleAddCategory}
-          ingredientLibrary={ingredientLibrary}
-          onAddIngredient={handleAddIngredient}
+          categoryLibrary={categories}
+          onAddCategory={addCategory}
+          ingredientLibrary={ingredients}
+          onAddIngredient={addIngredient}
           onSubmit={handleSaveItem}
           onCancel={() => setEditingItem(null)}
         />

@@ -38,11 +38,26 @@ export interface MenuItem {
   id: string
   name: string
   description: string
-  category: string
+  categoryId: string
   available: boolean
   photoUrl?: string
   kind: MenuItemKind
   price?: number
   sizes?: MenuItemSize[]
+  removableIngredientIds?: string[]
+}
+
+export interface MenuItemSizeInput {
+  label: string
+  price: number
+}
+
+export interface MenuItemPayload {
+  name: string
+  description: string
+  categoryId: string
+  kind: MenuItemKind
+  price?: number
+  sizes?: MenuItemSizeInput[]
   removableIngredientIds?: string[]
 }

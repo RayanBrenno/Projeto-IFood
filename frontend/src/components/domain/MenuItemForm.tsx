@@ -1,12 +1,12 @@
 import { useState, type FormEvent } from 'react'
-import type { Category, Ingredient, MenuItem, MenuItemKind, MenuItemSize } from '../../types/company'
+import type { Category, Ingredient, MenuItem, MenuItemKind, MenuItemPayload, MenuItemSize } from '../../types/company'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
 
 const KIND_OPTIONS: Array<{ value: MenuItemKind; label: string }> = [
   { value: 'SIMPLES', label: 'Simples' },
-  { value: 'COM_TAMANHOS', label: 'Com tamanhos' },
-  { value: 'UNITARIO_COM_INGREDIENTES', label: 'Unitário' },
+  { value: 'COM_TAMANHOS', label: 'Com tamanhos/tipos' },
+  { value: 'UNITARIO_COM_INGREDIENTES', label: 'Ingredientes removíveis' },
 ]
 
 function defaultSizes(): MenuItemSize[] {
@@ -20,10 +20,10 @@ function defaultSizes(): MenuItemSize[] {
 interface MenuItemFormProps {
   initialItem?: MenuItem
   categoryLibrary: Category[]
-  onAddCategory: (name: string) => Category
+  onAddCategory: (name: string) => Promise<Category>
   ingredientLibrary: Ingredient[]
-  onAddIngredient: (name: string) => Ingredient
-  onSubmit: (data: Omit<MenuItem, 'id' | 'available'>) => void
+  onAddIngredient: (name: string) => Promise<Ingredient>
+  onSubmit: (data: MenuItemPayload) => Promise<void>
   onCancel: () => void
 }
 
@@ -39,7 +39,7 @@ export function MenuItemForm({
   const [kind, setKind] = useState<MenuItemKind>(initialItem?.kind ?? 'SIMPLES')
   const [name, setName] = useState(initialItem?.name ?? '')
   const [description, setDescription] = useState(initialItem?.description ?? '')
-  const [category, setCategory] = useState(initialItem?.category ?? categoryLibrary[0]?.name ?? '')
+  const [categoryId, setCategoryId] = useState(initialItem?.categoryId ?? categoryLibrary[0]?.id ?? '')
   const [newCategoryName, setNewCategoryName] = useState('')
   const [price, setPrice] = useState(initialItem?.price !== undefined ? String(initialItem.price) : '')
   const [sizes, setSizes] = useState<MenuItemSize[]>(initialItem?.sizes ?? [])
@@ -47,6 +47,7 @@ export function MenuItemForm({
     initialItem?.removableIngredientIds ?? []
   )
   const [newIngredientName, setNewIngredientName] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   function handleKindChange(nextKind: MenuItemKind) {
     setKind(nextKind)
@@ -75,36 +76,41 @@ export function MenuItemForm({
     setSelectedIngredientIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
   }
 
-  function handleAddIngredient() {
+  async function handleAddIngredient() {
     const trimmed = newIngredientName.trim()
     if (!trimmed) return
-    const ingredient = onAddIngredient(trimmed)
+    const ingredient = await onAddIngredient(trimmed)
     setSelectedIngredientIds((prev) => (prev.includes(ingredient.id) ? prev : [...prev, ingredient.id]))
     setNewIngredientName('')
   }
 
-  function handleAddCategory() {
+  async function handleAddCategory() {
     const trimmed = newCategoryName.trim()
     if (!trimmed) return
-    const newCategory = onAddCategory(trimmed)
-    setCategory(newCategory.name)
+    const newCategory = await onAddCategory(trimmed)
+    setCategoryId(newCategory.id)
     setNewCategoryName('')
   }
 
-  function handleSubmit(event: FormEvent) {
+  async function handleSubmit(event: FormEvent) {
     event.preventDefault()
-    const base = { name, description, category, kind }
+    const base = { name, description, categoryId, kind }
 
-    if (kind === 'COM_TAMANHOS') {
-      onSubmit({ ...base, sizes })
-    } else if (kind === 'UNITARIO_COM_INGREDIENTES') {
-      onSubmit({
-        ...base,
-        price: Number(price.replace(',', '.')) || 0,
-        removableIngredientIds: selectedIngredientIds,
-      })
-    } else {
-      onSubmit({ ...base, price: Number(price.replace(',', '.')) || 0 })
+    setIsSubmitting(true)
+    try {
+      if (kind === 'COM_TAMANHOS') {
+        await onSubmit({ ...base, sizes: sizes.map(({ label, price }) => ({ label, price })) })
+      } else if (kind === 'UNITARIO_COM_INGREDIENTES') {
+        await onSubmit({
+          ...base,
+          price: Number(price.replace(',', '.')) || 0,
+          removableIngredientIds: selectedIngredientIds,
+        })
+      } else {
+        await onSubmit({ ...base, price: Number(price.replace(',', '.')) || 0 })
+      }
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -194,12 +200,12 @@ export function MenuItemForm({
         <span className="text-sm font-medium text-ink">Categoria</span>
         <div className="flex flex-wrap gap-2">
           {categoryLibrary.map((option) => {
-            const selected = category === option.name
+            const selected = categoryId === option.id
             return (
               <button
                 key={option.id}
                 type="button"
-                onClick={() => setCategory(option.name)}
+                onClick={() => setCategoryId(option.id)}
                 className={`min-h-[36px] rounded-full px-3.5 text-sm font-semibold transition-colors ${
                   selected ? 'bg-brand text-white' : 'bg-white text-gray-500 border border-gray-200'
                 }`}
@@ -261,11 +267,11 @@ export function MenuItemForm({
       )}
 
       <div className="flex gap-3 mt-2">
-        <Button type="button" variant="secondary" onClick={onCancel} className="flex-1">
+        <Button type="button" variant="secondary" onClick={onCancel} className="flex-1" disabled={isSubmitting}>
           Cancelar
         </Button>
-        <Button type="submit" className="flex-1">
-          Salvar
+        <Button type="submit" className="flex-1" loading={isSubmitting}>
+          {isSubmitting ? 'Salvando...' : 'Salvar'}
         </Button>
       </div>
     </form>
