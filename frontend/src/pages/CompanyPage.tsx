@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { BottomSheet } from '../components/layout/BottomSheet'
 import { PageContainer } from '../components/layout/PageContainer'
 import { TopBar } from '../components/layout/TopBar'
@@ -6,10 +6,10 @@ import { Button } from '../components/ui/Button'
 import { MenuItemForm } from '../components/domain/MenuItemForm'
 import { MenuItemRow } from '../components/domain/MenuItemRow'
 import { OrderCard } from '../components/domain/OrderCard'
-import { mockOrders } from '../mocks/companyMockData'
-import type { MenuItem, MenuItemPayload, OrderStatus } from '../types/company'
+import type { MenuItem, MenuItemPayload, Order, OrderStatus } from '../types/company'
 import { useAuth } from '../hooks/useAuth'
 import { useMenu } from '../hooks/useMenu'
+import { fetchRestaurantOrders, updateOrderStatus } from '../api/orders'
 import { getApiErrorMessage } from '../utils/apiError'
 
 const stripeBg = {
@@ -29,7 +29,7 @@ const ORDER_FILTERS: Array<{ label: string; value: 'ALL' | OrderStatus }> = [
 
 function nextStatus(status: OrderStatus): OrderStatus | null {
   const index = STATUS_FLOW.indexOf(status)
-  return index < STATUS_FLOW.length - 1 ? STATUS_FLOW[index + 1] : null
+  return index !== -1 && index < STATUS_FLOW.length - 1 ? STATUS_FLOW[index + 1] : null
 }
 
 export default function CompanyPage() {
@@ -37,8 +37,29 @@ export default function CompanyPage() {
 
   const [activeTab, setActiveTab] = useState<'orders' | 'menu'>('orders')
 
-  const [orders, setOrders] = useState(mockOrders)
+  const [orders, setOrders] = useState<Order[]>([])
+  const [ordersLoading, setOrdersLoading] = useState(true)
+  const [ordersError, setOrdersError] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState<'ALL' | OrderStatus>('ALL')
+
+  const loadOrders = useCallback(async () => {
+    setOrdersLoading(true)
+    setOrdersError(null)
+    try {
+      const data = await fetchRestaurantOrders()
+      setOrders(data)
+    } catch (err) {
+      setOrdersError(getApiErrorMessage(err, 'Não foi possível carregar os pedidos.'))
+    } finally {
+      setOrdersLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    loadOrders()
+    const interval = setInterval(loadOrders, 15000)
+    return () => clearInterval(interval)
+  }, [loadOrders])
 
   const {
     categories,
@@ -67,12 +88,16 @@ export default function CompanyPage() {
     .filter((order) => statusFilter === 'ALL' || order.status === statusFilter)
     .sort((a, b) => a.placedMinutesAgo - b.placedMinutesAgo)
 
-  function handleAdvanceOrder(orderId: string) {
-    setOrders((prev) =>
-      prev.map((order) =>
-        order.id === orderId ? { ...order, status: nextStatus(order.status) ?? order.status } : order
-      )
-    )
+  async function handleAdvanceOrder(orderId: string, currentStatus: OrderStatus) {
+    const next = nextStatus(currentStatus)
+    if (!next) return
+    try {
+      const updated = await updateOrderStatus(orderId, next)
+      setOrders((prev) => prev.map((o) => (o.id === orderId ? updated : o)))
+    } catch {
+      // reload to sync state on failure
+      loadOrders()
+    }
   }
 
   async function handleToggleAvailable(itemId: string) {
@@ -155,7 +180,20 @@ export default function CompanyPage() {
               ))}
             </div>
 
-            {filteredOrders.length === 0 ? (
+            {ordersLoading ? (
+              <p className="text-sm text-gray-400 text-center pt-10">Carregando pedidos…</p>
+            ) : ordersError ? (
+              <div className="flex flex-col items-center gap-3 pt-10">
+                <p className="text-sm text-gray-400 text-center">{ordersError}</p>
+                <button
+                  type="button"
+                  onClick={loadOrders}
+                  className="min-h-[44px] rounded-full bg-brand px-4 text-sm font-semibold text-white"
+                >
+                  Tentar novamente
+                </button>
+              </div>
+            ) : filteredOrders.length === 0 ? (
               <p className="text-sm text-gray-400 text-center pt-10">Nenhum pedido nesse status.</p>
             ) : (
               <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
@@ -164,7 +202,7 @@ export default function CompanyPage() {
                     key={order.id}
                     order={order}
                     canAdvance={nextStatus(order.status) !== null}
-                    onAdvance={() => handleAdvanceOrder(order.id)}
+                    onAdvance={() => handleAdvanceOrder(order.id, order.status)}
                     onOpenChat={() => {}}
                   />
                 ))}
