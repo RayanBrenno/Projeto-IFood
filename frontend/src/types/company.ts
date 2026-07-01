@@ -1,4 +1,4 @@
-export type OrderStatus = 'CRIADO' | 'CONFIRMADO' | 'EM_PREPARO' | 'SAIU_PARA_ENTREGA' | 'ENTREGUE'
+export type OrderStatus = 'CRIADO' | 'CONFIRMADO' | 'EM_PREPARO' | 'SAIU_PARA_ENTREGA' | 'ENTREGUE' | 'CANCELADO'
 
 export interface OrderItem {
   name: string
@@ -14,6 +14,18 @@ export interface Order {
   placedMinutesAgo: number
   notes?: string
   items: OrderItem[]
+}
+
+export interface CustomerOrder extends Order {
+  companyName: string
+}
+
+export interface CartItem {
+  menuItem: MenuItem
+  quantity: number
+  sizeId?: string
+  sizeLabel?: string
+  unitPrice: number
 }
 
 export type MenuItemKind = 'SIMPLES' | 'COM_TAMANHOS' | 'UNITARIO_COM_INGREDIENTES'

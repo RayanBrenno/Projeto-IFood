@@ -3,6 +3,7 @@ import { formatCurrency } from '../../utils/formatCurrency'
 
 interface PublicMenuItemRowProps {
   item: MenuItem
+  onAdd?: () => void
 }
 
 function displayPrice(item: MenuItem): string {
@@ -14,7 +15,7 @@ function displayPrice(item: MenuItem): string {
   return formatCurrency(item.price ?? 0)
 }
 
-export function PublicMenuItemRow({ item }: PublicMenuItemRowProps) {
+export function PublicMenuItemRow({ item, onAdd }: PublicMenuItemRowProps) {
   return (
     <div
       className={`flex items-center gap-3 rounded-xl border border-gray-100 bg-white px-3 py-2.5 shadow-sm ${
@@ -34,6 +35,16 @@ export function PublicMenuItemRow({ item }: PublicMenuItemRowProps) {
         <span className="text-sm text-gray-500">{item.description}</span>
         <span className="text-sm font-medium text-ink">{displayPrice(item)}</span>
       </div>
+      {onAdd && (
+        <button
+          type="button"
+          onClick={onAdd}
+          aria-label={`Adicionar ${item.name}`}
+          className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-brand text-white text-xl leading-none shadow-sm hover:bg-brand-dark transition-colors"
+        >
+          +
+        </button>
+      )}
     </div>
   )
 }
