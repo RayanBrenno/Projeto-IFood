@@ -25,6 +25,20 @@ export default function HomePage() {
       />
 
       <div className="lg:w-4/5 lg:mx-auto">
+        <Link
+          to="/orders"
+          className="flex items-center gap-3 rounded-xl border border-gray-100 bg-white px-3 py-3 shadow-sm mt-3"
+        >
+          <div className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-brand/10 text-brand text-lg">
+            🧾
+          </div>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-sm font-semibold text-ink">Meus pedidos</span>
+            <span className="text-xs text-gray-400">Acompanhe seus pedidos</span>
+          </div>
+          <span className="ml-auto text-gray-300 text-lg">›</span>
+        </Link>
+
         {loading ? (
           <p className="text-sm text-gray-400 text-center pt-10">Carregando restaurantes…</p>
         ) : error ? (
